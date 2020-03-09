@@ -47,6 +47,9 @@ bash run.sh
 tensorflow 版本>r1.8 <r2.0, python3
 ```
 
+# 版本
+v1.0：https://github.com/wuba/qa_match/tree/v1.0
+
 # 如何贡献&问题反馈
 我们诚挚地希望开发者向我们提出宝贵的意见和建议。您可以挑选以下方式向我们反馈建议和问题：
 1. 在 github上 提交 PR 或者 Issue
