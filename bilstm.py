@@ -1,7 +1,7 @@
 # coding=utf-8
 
 """
-a bi-lstm implemation for short text classification using tensroflow library
+a bi-lstm implementation for short text classification using tensroflow library
 
 """
 
