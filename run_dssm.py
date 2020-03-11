@@ -1,7 +1,7 @@
 # coding=utf-8
 
 """
-running lstm + dssm for short text match
+running lstm + dssm for short text matching
 
 """
 

@@ -1,7 +1,7 @@
 # coding=utf-8
 
 """
-tools for run bi-lstm + dssm  short text match
+tools for run bi-lstm + dssm  short text matching
 """
 
 import random
