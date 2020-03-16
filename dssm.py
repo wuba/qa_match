@@ -1,7 +1,7 @@
 # coding=utf-8
 
 """
-a lstm + dssm implementation for short text matching using tensroflow library
+a lstm + dssm implementation for short text match using tensroflow library
 
 """
 
