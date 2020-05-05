@@ -11,10 +11,78 @@ import copy
 
 class DataHelper(object):
 
-    def __init__(self, train_path, valid_path, test_path, standard_path, batch_size, epcho_num):
-        self.train_test_generator(train_path, valid_path, test_path, standard_path, batch_size, epcho_num)
+    def __init__(self, train_path, valid_path, test_path, standard_path, batch_size, epcho_num, label2id_file, vocab2id_file, is_train):
+        if is_train:
+            self.train_valid_generator(train_path, valid_path, standard_path, batch_size, epcho_num)
+        else:
+            self.test_generator(test_path, standard_path, batch_size, label2id_file, vocab2id_file)
 
-    def train_test_generator(self, train_path, valid_path, test_path, standard_path, batch_size, epcho_num):
+    def test_generator(self, test_path, standard_path, batch_size, label2id_file, vocab2id_file):
+        self.label2id = {}
+        self.id2label = {}
+        self.vocab2id = {}
+        self.id2vocab = {}
+        self.std_id_ques = {}
+        label_file = open(label2id_file, 'r', encoding='utf-8')
+        for line in label_file.readlines():
+            label_ids = line.strip().split('\t')
+            self.label2id[label_ids[0]] = label_ids[1]
+            self.id2label[label_ids[1]] = label_ids[0]
+        label_file.close()
+        vocab_file = open(vocab2id_file, 'r', encoding='utf-8')
+        for line in vocab_file.readlines():
+            vocab_ids = line.strip().split('\t')
+            self.vocab2id[vocab_ids[0]] = vocab_ids[1]
+            self.id2vocab[vocab_ids[1]] = vocab_ids[0]
+        vocab_file.close()
+        std_file = open(standard_path, 'r', encoding='utf-8')
+        max_std_len = 0
+        for line in std_file:
+            label_words = line.strip().split("\t")
+            label = label_words[1]
+            w_temp = []
+            words = label_words[2].split(" ")
+            for word in words:
+                w_temp.append(self.vocab2id[word])
+            if max_std_len < len(w_temp):
+                max_std_len = len(w_temp)
+            self.std_id_ques[self.label2id[label]] = (len(w_temp), w_temp, label, line.strip())
+        std_file.close()
+        self.std_batch = []
+        self.predict_label_seq = []
+        self.predict_id_seq = []
+        # when predicted test data must order by this sequence
+        for std_id, ques_info in self.std_id_ques.items():
+            self.std_batch.append((ques_info[0], ques_info[1]))
+            self.predict_label_seq.append(self.id2label[std_id])
+            self.predict_id_seq.append(std_id)
+
+        # std question padding
+        for ques_info in self.std_batch:
+            for _ in range(max_std_len - ques_info[0]):
+                ques_info[1].append(self.vocab2id['PAD'])
+
+        file = open(test_path, 'r', encoding='utf-8')
+        self.test_num = 0
+        self.test_batch = []
+        for line in file.readlines():
+            label_words = line.strip().split('\t')
+            #label include list answer(label likes id1,id2,...) and rufuse answer(label is 0)
+            label = label_words[0]
+            w_temp = []
+            words = label_words[2].split(' ')
+            for word in words:
+                if word not in self.vocab2id:
+                    w_temp.append(self.vocab2id['UNK'])
+                else:
+                    w_temp.append(self.vocab2id[word])
+            self.test_batch.append((len(w_temp), w_temp, label, label_words[2]))
+            self.test_num = self.test_num + 1
+        file.close()
+        self.batch_size = batch_size
+        self.test_num_batch = math.ceil(self.test_num / self.batch_size)
+
+    def train_valid_generator(self, train_path, valid_path, standard_path, batch_size, epcho_num):
         self.label2id = {}
         self.id2label = {}
         self.vocab2id = {}
@@ -28,13 +96,14 @@ class DataHelper(object):
         self.std_id_ques = {}
         max_std_len = 0
         for line in file.readlines():
-            label_words = line.strip().split(" ")
-            label = label_words[0]
+            label_words = line.strip().split("\t")
+            label = label_words[1]
             if label not in self.label2id:
                 self.label2id[label] = len(self.label2id)
                 self.id2label[self.label2id[label]] = label
             w_temp = []
-            for word in label_words[1:]:
+            words = label_words[2].split(" ")
+            for word in words:
                 if word not in self.vocab2id:
                     self.vocab2id[word] = len(self.vocab2id)
                     self.id2vocab[self.vocab2id[word]] = word
@@ -46,22 +115,23 @@ class DataHelper(object):
         self.std_batch = []
         self.predict_label_seq = []
         self.predict_id_seq = []
-        #when predicted test data must order by this sequence
+        #when predicted valid data must order by this sequence
         for std_id, ques_info in self.std_id_ques.items():
             self.std_batch.append((ques_info[0], ques_info[1]))
-            self.predict_label_seq.append(label)
+            self.predict_label_seq.append(self.id2label[std_id])
             self.predict_id_seq.append(std_id)
         self.train_num = 0
         self.train_id_ques = {}
         file = open(train_path, 'r', encoding='utf-8')
         for line in file.readlines():
-            label_words = line.strip().split()
+            label_words = line.strip().split('\t')
             label = label_words[0]
-            if label not in self.label2id:
-                self.label2id[label] = len(self.label2id)
-                self.id2label[self.label2id[label]] = label
+            if ',' in label or '0' == label:
+                continue
+            assert label in self.label2id
             w_temp = []
-            for word in label_words[1:]:
+            words = label_words[2].split(' ')
+            for word in words:
                 if word not in self.vocab2id:
                     self.vocab2id[word] = len(self.vocab2id)
                     self.id2vocab[self.vocab2id[word]] = word
@@ -83,41 +153,28 @@ class DataHelper(object):
         self.valid_num = 0
         self.valid_batch = []
         for line in file.readlines():
-            label_words = line.strip().split()
+            label_words = line.strip().split('\t')
             label = label_words[0]
-            if label not in self.label2id:
-                print("label not in label2id: strings is: " + line)
+            #del list answer and rufuse answer
+            if ',' in label or '0' == label:
                 continue
+            assert label in self.label2id
             w_temp = []
-            for word in label_words[1:]:
+            words = label_words[2].split(' ')
+            for word in words:
                 if word not in self.vocab2id:
                     w_temp.append(self.vocab2id['UNK'])
                 else:
                     w_temp.append(self.vocab2id[word])
-            self.valid_batch.append((len(w_temp), w_temp, label, line.strip()))
+            self.valid_batch.append((len(w_temp), w_temp, label, label_words[2]))
             self.valid_num = self.valid_num + 1
         file.close()
-        file = open(test_path, 'r', encoding='utf-8')
-        self.test_num = 0
-        self.test_batch = []
-        for line in file.readlines():
-            label_words = line.strip().split()
-            label = label_words[0]
-            w_temp = []
-            for word in label_words[1:]:
-                if word not in self.vocab2id:
-                    w_temp.append(self.vocab2id['UNK'])
-                else:
-                    w_temp.append(self.vocab2id[word])
-            self.test_batch.append((len(w_temp), w_temp, label, line.strip()))
-            self.test_num = self.test_num + 1
-        file.close()
+
         self.batch_size = batch_size
         self.train_num_epcho = epcho_num
         self.train_num_batch = math.ceil(self.train_num / self.batch_size)
         self.valid_num_batch = math.ceil(self.valid_num / self.batch_size)
-        self.valid_num_batch = math.ceil(self.valid_num / self.batch_size)
-        self.test_num_batch = math.ceil(self.test_num / self.batch_size)
+
 
     def weight_random(self, label_questions, batch_size):
         def index_choice(weight):

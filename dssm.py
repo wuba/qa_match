@@ -26,9 +26,9 @@ class Dssm(object):
         self.global_step = tf.Variable(0, trainable=False)
         self.keep_prob = tf.placeholder(tf.float32, name="keep_prob")
         self.input_x = tf.placeholder(tf.int32, [None, None], name="input_x")  #[batch_size, seq_len]
-        self.length_x = tf.placeholder(tf.int32, [None, ], name="length_x")  #[batch_size, 1]
+        self.length_x = tf.placeholder(tf.int32, [None, ], name="length_x")  #[batch_size, ]
         self.input_y = tf.placeholder(tf.int32, [None, None], name="input_y")  #[batch_size, seq_len]
-        self.length_y = tf.placeholder(tf.int32, [None, ], name="length_y")  #[batch_size, 1]
+        self.length_y = tf.placeholder(tf.int32, [None, ], name="length_y")  #[batch_size, ]
         self.lstm_fw_cell = rnn.BasicLSTMCell(num_lstm_units)
         if use_same_cell:
             self.lstm_bw_cell = self.lstm_fw_cell
@@ -51,8 +51,10 @@ class Dssm(object):
             self.states_y = tf.nn.bidirectional_dynamic_rnn(self.lstm_fw_cell, self.lstm_bw_cell, self.lstm_input_embedding_y, self.length_y,
                                                             dtype=tf.float32)[1]
             self.output_y = tf.concat([self.states_y[0][1], self.states_y[1][1]], 1)  #[batch_size, 2*num_lstm_units]
-            self.q_y_raw = tf.nn.relu(self.output_x)  #[batch_size, num_lstm_units*2]
-            self.qs_y_raw = tf.nn.relu(self.output_y)  #[batch_size, num_lstm_units*2]
+            self.q_y_raw = tf.nn.relu(self.output_x, name="q_y_raw")  #[batch_size, num_lstm_units*2]
+            print("self.q_y_raw: " + str(self.q_y_raw))
+            self.qs_y_raw = tf.nn.relu(self.output_y, name="qs_y_raw")  #[batch_size, num_lstm_units*2]
+            print("self.qs_y_raw: " + str(self.qs_y_raw))
 
         with tf.name_scope('rotate'):
             temp = tf.tile(self.qs_y_raw, [1, 1])  #[batch_size, num_lstm_units*2]

@@ -73,7 +73,7 @@ class BiLSTM(object):
             self.logits = tf.matmul(self.final_output, weights) + biases  #[batchsize, label_size]
             #not use attention
             #self.logits = tf.matmul(self.states, weights) + biases
-            self.prediction = tf.nn.softmax(self.logits)  #[batchsize, label_size]
+            self.prediction = tf.nn.softmax(self.logits, name="prediction_softmax")  #[batchsize, label_size]
             self.loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=self.logits, labels=self.input_y))
             self.global_step = tf.train.get_or_create_global_step()
             self.correct = tf.equal(tf.argmax(self.prediction, 1), self.input_y)
@@ -84,3 +84,23 @@ class BiLSTM(object):
             # optimizer
             self.learning_rate = tf.train.exponential_decay(FLAGS.lr, self.global_step, 200, 0.96, staircase=True)
             self.train_step = tf.train.AdamOptimizer(self.learning_rate).minimize(self.loss, global_step=self.global_step)
+
+        self.saver = tf.train.Saver(tf.global_variables(), max_to_keep=2)
+
+    def export_model(self, export_path, sess):
+        builder = tf.saved_model.builder.SavedModelBuilder(export_path)
+        tensor_info_x = tf.saved_model.utils.build_tensor_info(self.input_x)
+        tensor_info_y = tf.saved_model.utils.build_tensor_info(self.prediction)
+        tensor_info_len = tf.saved_model.utils.build_tensor_info(self.x_len)
+        tensor_dropout_keep_prob = tf.saved_model.utils.build_tensor_info(self.dropout_keep_prob)  # 1.0 for inference
+        prediction_signature = (
+            tf.saved_model.signature_def_utils.build_signature_def(
+                inputs={'input': tensor_info_x, 'sen_len': tensor_info_len,
+                        'dropout_keep_prob': tensor_dropout_keep_prob},
+                outputs={'output': tensor_info_y},
+                method_name=tf.saved_model.signature_constants.PREDICT_METHOD_NAME))
+        legacy_init_op = None
+        builder.add_meta_graph_and_variables(sess, [tf.saved_model.tag_constants.SERVING],
+                                             signature_def_map={'prediction': prediction_signature, },
+                                             legacy_init_op=legacy_init_op, clear_devices=True, saver=self.saver)
+        builder.save()
