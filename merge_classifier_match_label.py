@@ -260,16 +260,10 @@ def get_acc_recall_f1(result_file_dir):
     print("none_acc: " + str(none_acc) + ", none_recall: " + str(none_recall) + ", none_f1: " + str(none_f1))
 
 if __name__ == "__main__":
-    # max_pre_file_dir = sys.argv[1]
-    # min_pre_file_dir = sys.argv[2]
-    # result_file_dir = sys.argv[3]
-    # std_label_ques = sys.argv[4]
-    # max_pre_file_dir = "G:\\workspace\\qa_match_open_source\\data_demo\\result_max_test"
-    max_pre_file_dir = 'no'
-    min_pre_file_dir = "G:\\workspace\\qa_match_open_source\\data_demo\\result_min_test"
-    std_label_ques = "G:\\workspace\\qa_match_open_source\\data_demo\\std_data"
-    result_file_dir = "G:\\workspace\\qa_match_open_source\\data_demo\\result_merge"
-
+    max_pre_file_dir = sys.argv[1]
+    min_pre_file_dir = sys.argv[2]
+    result_file_dir = sys.argv[3]
+    std_label_ques = sys.argv[4]
     if max_pre_file_dir == 'no' or std_label_ques == 'no':  #only use min_pre result
         get_result_by_min(min_pre_file_dir, result_file_dir)
     else:  #merge max_pre result and min_pre result
