@@ -17,6 +17,9 @@ qa-match是一款基于深度学习的问答匹配工具，通过问题与问题
 
 ![结果融合](lstm_dssm_bagging.png)
 
+## 基于LSTM的预训练模型
+在bert模型问世后，我们参考bert预训练的原理开发了基于LSTM的预训练模型，在推理效果跟bert相差不大情况下，参数规模大幅减少、推理性能显著提升、已经在生产环境使用。[预训练模型使用说明](pretrain/README.md)
+
 # 如何使用
 ## 数据介绍
 需要是用到的数据文件（data_demo文件夹下）介绍如下：  
@@ -45,13 +48,15 @@ tensorflow 版本>r1.8 <r2.0, python3
 
 # 版本
 v1.0:https://github.com/wuba/qa_match/tree/v1.0
+
 v1.1:https://github.com/wuba/qa_match/tree/v1.1
+
+v1.2:https://github.com/wuba/qa_match/tree/v1.2
 
 # 未来规划
 未来我们会继续优化扩展qa_match的能力，计划开源如下：
-1. 基于LSTM的预训练模型。在bert模型问世后，我们参考bert预训练的原理开发了基于LSTM的预训练模型，在推理效果跟bert相差不大情况下，参数规模大幅减少、推理性能显著提升、已经在生产环境使用。
-2. 知识库半自动挖掘流程。基于知识库的构建，我们开发了一套结合人工和机器挖掘的算法流程，已经在生产环境使用，并取得了不错的效果。
-3. 目前tensorflow已发版到2.1版本，后续我们会根据需求发布tensorflow 2.X版本或pytorch版本的qa_match。
+1. 知识库半自动挖掘流程。基于知识库的构建，我们开发了一套结合人工和机器挖掘的算法流程，已经在生产环境使用，并取得了不错的效果。
+2. 目前tensorflow已发版到2.1版本，后续我们会根据需求发布tensorflow 2.X版本或pytorch版本的qa_match。
 
 # 如何贡献&问题反馈
 我们诚挚地希望开发者向我们提出宝贵的意见和建议。您可以挑选以下方式向我们反馈建议和问题：
