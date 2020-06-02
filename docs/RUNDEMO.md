@@ -2,7 +2,7 @@
 本示例给出了支持一层和两层结构知识库问答运行demo、评测指标及在测试集的效果。
 
 ## 数据介绍
-[data_demo](../data_demo)所给出的预训练集（pre_train_data），训练集（train_data），验证集(valid_data)，预测集(test_data)均取自58智能问答生产环境下的真实数据，其中预训练集9W+，训练集9W+，验证集和测试集均3000+，具体数据格式可见[README](../README.md)中的数据介绍部分。
+[data_demo](../data_demo)所给出的预训练集（pre_train_data），训练集（train_data），验证集(valid_data)，预测集(test_data) 取自58智能问答生产环境下的真实数据，这里仅为了跑通模型，因此只取了少部分数据，其中预训练集9W+（真实场景下数量较大），训练集9W+，验证集和测试集均3000+，具体数据格式可见[README](../README.md)中的数据介绍部分。
 
 ## 基于一层结构知识库的自动问答运行示例
 
@@ -107,13 +107,3 @@ python merge_classifier_match_label.py ./model/model_max/result_max_test ./model
 | 二级知识库数据集 | LSTM+DSSM融合模型[[下载](http://wos.58cdn.com.cn/nOlKjIhGntU/qamatch/model_merge.zip)] | 0.8957             | 0.9027             | **0.8992**     | 18ms                  |
 
 说明：由于示例数据中列表回答真实占比较小，这里我们主要看唯一回答的准确率、召回率和F1值。对于二级知识库数据集，我们也可以使用预训练模型来完成自动问答，这里不做过多描述。
-
-预训练耗时示例如下表所示： 
-
-| 指标名称         | 指标值                       |
-| ---------------- | ---------------------------- |
-| 预训练数据集大小 | 10Million                    |
-| 预训练资源       | Nvidia P40 / 12G Memory      |
-| 预训练参数       | step = 500000 / batch size=256 |
-| 预训练耗时       | 215.69hour                   |
-
