@@ -32,6 +32,7 @@ class Sentence(object):
         self.weights = []
         self.fw_labels = []
         self.bw_labels = []
+        self.token_ids = []
 
         for t in self.raw_tokens:
             self.token_ids.append(word2id[t])
