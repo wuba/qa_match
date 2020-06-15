@@ -37,7 +37,7 @@ class Dssm(object):
         else:
             self.lstm_bw_cell = rnn.BasicLSTMCell(num_lstm_units)
         with tf.name_scope("keep_prob"):
-            self.lstm_fw_cell = rnn.DropoutWrapper(self.lstm_bw_cell, input_keep_prob=self.keep_prob,
+            self.lstm_fw_cell = rnn.DropoutWrapper(self.lstm_fw_cell, input_keep_prob=self.keep_prob,
                                                    output_keep_prob=self.keep_prob)
             self.lstm_bw_cell = rnn.DropoutWrapper(self.lstm_bw_cell, input_keep_prob=self.keep_prob,
                                                    output_keep_prob=self.keep_prob)
