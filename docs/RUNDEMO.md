@@ -119,7 +119,7 @@ cd sptm && python run_prediction.py --input_file="../data_demo/test_data" --voca
 #### 4.预测结果格式化，按照打分阈值高低给出回答类别
 
 ```bash
-python pretrain/format_result.py ./data_demo/test_data ./data_demo/result_pretrain_raw ./data_demo/result_pretrain_test
+python sptm/format_result.py ./data_demo/test_data ./data_demo/result_pretrain_raw ./data_demo/result_pretrain_test
 ```
 参数说明：
 
