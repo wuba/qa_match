@@ -44,7 +44,7 @@ qa_match支持知识库结构如下：
 
 ##### 轻量级预训练语言模型（SPTM，Simple Pre-trained Model）介绍
 
-考虑到实际使用中往往存在大量的无标签数据，在知识库数据有限时，可使用无监督预训练语言模型提升匹配模型的效果。参考[BERT](https://github.com/google-research/bert)预训练过程，2019年4月我们开发了SPTM模型，该模型相对于BERT主要改进了两方面：一是去掉了效果不明显的NSP（Next Sentence Prediction），二是为了提高线上推理性能将Transformer替换成了LSTM，模型原理如下：
+考虑到实际使用中往往存在大量的无标签数据，在知识库数据有限时，可使用无监督预训练语言模型提升匹配模型的效果。参考[BERT](https://github.com/google-research/bert)预训练过程，2019年5月我们开发了SPTM模型，该模型相对于BERT主要改进了两方面：一是去掉了效果不明显的NSP（Next Sentence Prediction），二是为了提高线上推理性能将Transformer替换成了LSTM，模型原理如下：
 
 ###### 数据预处理
 
