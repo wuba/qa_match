@@ -106,6 +106,7 @@ v1.0:https://github.com/wuba/qa_match/tree/v1.0
 
 v1.1:https://github.com/wuba/qa_match/tree/v1.1
 
+v1.2:https://github.com/wuba/qa_match/tree/v1.2
 
 ## 未来规划
 未来我们会继续优化扩展qa_match的能力，计划开源如下：
