@@ -11,8 +11,6 @@ import argparse
 import models
 import utils
 
-from tensorflow.python.framework import graph_util
-
 
 def evaluate(sess, full_tensors, args, model):
     total_num = 0
@@ -22,7 +20,8 @@ def evaluate(sess, full_tensors, args, model):
                               feed_dict={model.ph_dropout_rate: 0,
                                          model.ph_tokens: batch_data[0],
                                          model.ph_labels: batch_data[1],
-                                         model.ph_length: batch_data[2]})
+                                         model.ph_length: batch_data[2],
+                                         model.ph_input_mask: batch_data[3]})
         pred_re = np.argmax(softmax_re, axis=1)
         total_num += len(pred_re)
         right_num += np.sum(pred_re == batch_data[1])
@@ -55,6 +54,17 @@ def main(_):
                         help="Initial checkpoint (usually from a pre-trained model).")
     parser.add_argument("--max_len", type=int, default=100, help="Max seqence length.")
     parser.add_argument("--layer_num", type=int, default=2, help="LSTM layer num.")
+
+    parser.add_argument("--representation_type", type=str, default="lstm",
+                        help="representation type include:lstm, transformer")
+
+    # transformer args
+    parser.add_argument("--initializer_range", type=float, default="0.02", help="Embedding initialization range")
+    parser.add_argument("--max_position_embeddings", type=int, default=512, help="max position num")
+    parser.add_argument("--hidden_size", type=int, default=768, help="hidden size")
+    parser.add_argument("--num_hidden_layers", type=int, default=12, help="num hidden layer")
+    parser.add_argument("--num_attention_heads", type=int, default=12, help="num attention heads")
+    parser.add_argument("--intermediate_size", type=int, default=3072, help="intermediate_size")
 
     args = parser.parse_args()
 
@@ -105,7 +115,6 @@ def main(_):
     config.gpu_options.allow_growth = True
     with tf.Session(config=config) as sess:
         sess.run(tf.global_variables_initializer())
-
         total_loss = 0
         dev_best_so_far = 0
         for epoch in range(1, args.epoch + 1):
@@ -115,7 +124,8 @@ def main(_):
                                                 feed_dict={model.ph_dropout_rate: args.dropout_rate,
                                                            model.ph_tokens: batch_data[0],
                                                            model.ph_labels: batch_data[1],
-                                                           model.ph_length: batch_data[2]})
+                                                           model.ph_length: batch_data[2],
+                                                           model.ph_input_mask: batch_data[3]})
                 total_loss += loss
                 if global_step % print_step == 0:
                     tf.logging.info(

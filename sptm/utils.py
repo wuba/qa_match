@@ -4,15 +4,11 @@ tools for runing pretrain and finetune language models
 
 """
 import sys
-import os
 import numpy as np
-import argparse
 import codecs
 from collections import namedtuple
 import queue
 import threading
-import random
-import re
 import tensorflow as tf
 
 
@@ -33,9 +29,11 @@ class Sentence(object):
         self.fw_labels = []
         self.bw_labels = []
         self.token_ids = []
+        self.input_masks = []
 
         for t in self.raw_tokens:
             self.token_ids.append(word2id[t])
+            self.input_masks.append(1)
 
         for ta in self.bidirectional_targets:
             # predict itself
@@ -55,6 +53,7 @@ class Sentence(object):
     def to_ids(self, word2id, label2id, max_len):
         self.label_id = label2id[self.raw_label]
         self.raw_tokens = self.raw_tokens[:max_len]  # cut off to the max length
+        self.input_masks = []
         all_unk = True
         for t in self.raw_tokens:
             if t in word2id:
@@ -62,9 +61,11 @@ class Sentence(object):
                 all_unk = False
             else:
                 self.token_ids.append(word2id["<UNK>"])
+            self.input_masks.append(1)
         assert not all_unk
 
         self.token_ids = self.token_ids + [0] * (max_len - len(self.token_ids))
+        self.input_masks = self.input_masks + [0] * (max_len - len(self.input_masks))
 
     # file utils
 
@@ -115,12 +116,14 @@ def gen_test_data(test_file, word2id):
     for l in codecs.open(test_file, 'r', 'utf-8'):
         fs = l.rstrip().split('\t')[-1].split()
         sen = []
+        mask = []
         for f in fs:
             if f in word2id:
                 sen.append(word2id[f])
             else:
                 sen.append(word2id['<UNK>'])
-        sens.append(sen)
+            mask.append(1)
+        sens.append((sen, mask))
     return sens
 
 
@@ -216,6 +219,7 @@ def gen_batches(sens, batch_size):
 
     cur_idx = 0
     token_batch = []
+    input_mask_batch = []
     length_batch = []
 
     position_batch = []
@@ -225,6 +229,7 @@ def gen_batches(sens, batch_size):
     while cur_idx < len(sens):
         token_batch.append(sens[per[cur_idx]].token_ids)
         length_batch.append(len(sens[per[cur_idx]].token_ids))
+        input_mask_batch.append(sens[per[cur_idx]].input_masks)
 
         label_batch.append(sens[per[cur_idx]].labels)
         position_batch.append(sens[per[cur_idx]].positions)
@@ -232,15 +237,18 @@ def gen_batches(sens, batch_size):
         if len(token_batch) == batch_size or cur_idx == len(sens) - 1:
             max_len = max(length_batch)
             for ts in token_batch: ts.extend([0] * (max(length_batch) - len(ts)))
+            for im in input_mask_batch: im.extend([0] * (max_len - len(im)))
 
-            yield token_batch, length_batch, label_batch, position_batch, weight_batch
+            yield token_batch, length_batch, label_batch, position_batch, weight_batch, input_mask_batch
 
             del token_batch
+            del input_mask_batch
             del length_batch
             del label_batch
             del position_batch
             del weight_batch
             token_batch = []
+            input_mask_batch = []
             length_batch = []
             label_batch = []
             position_batch = []
@@ -285,27 +293,31 @@ def queue_gen_batches(sens, args, word2id, id2word):
 
 def make_full_tensors(sens):
     tokens = np.zeros((len(sens), len(sens[0].token_ids)), dtype=np.int32)
+    masks = np.zeros((len(sens), len(sens[0].input_masks)), dtype=np.int32)
     labels = np.zeros((len(sens)), dtype=np.int32)
     length = np.zeros((len(sens)), dtype=np.int32)
     for idx, sen in enumerate(sens):
         tokens[idx] = sen.token_ids
+        masks[idx] = sen.input_masks
         labels[idx] = sen.label_id
         length[idx] = len(sen.raw_tokens)
-    return tokens, labels, length
+    return tokens, labels, length, masks
 
 
 def gen_batchs(full_tensors, batch_size, is_shuffle):
-    tokens, labels, length = full_tensors
+    tokens, labels, length, masks = full_tensors
     per = np.array([i for i in range(len(tokens))])
     if is_shuffle:
         np.random.shuffle(per)
 
     cur_idx = 0
     token_batch = []
+    mask_batch = []
     label_batch = []
     length_batch = []
     while cur_idx < len(tokens):
         token_batch.append(tokens[per[cur_idx]])
+        mask_batch.append(masks[per[cur_idx]])
         label_batch.append(labels[per[cur_idx]])
         length_batch.append(length[per[cur_idx]])
 
@@ -314,11 +326,13 @@ def gen_batchs(full_tensors, batch_size, is_shuffle):
             real_max_len = max(length_batch)
             for i in range(len(token_batch)):
                 token_batch[i] = token_batch[i][:real_max_len]
+                mask_batch[i] = mask_batch[i][:real_max_len]
 
-            yield token_batch, label_batch, length_batch
+            yield token_batch, label_batch, length_batch, mask_batch
             token_batch = []
             label_batch = []
             length_batch = []
+            mask_batch = []
         cur_idx += 1
 
 

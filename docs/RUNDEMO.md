@@ -68,8 +68,9 @@ python merge_classifier_match_label.py none ./model/model_min/result_min_test ./
 
 #### 1.预训练语言模型
 
+##### 基于Bi-LSTM block的预训练
 ```bash
-cd sptm && mkdir -p model/pretrain && python run_pretraining.py --train_file="../data_demo/pre_train_data" --vocab_file="../data_demo/vocab" --model_save_dir="./model/pretrain" --batch_size=256 --print_step=100 --weight_decay=0 --embedding_dim=1000 --lstm_dim=500 --layer_num=1 --train_step=100000 --warmup_step=1000 --learning_rate=5e-5 --dropout_rate=0.1 --max_predictions_per_seq=10 --clip_norm=1.0 --max_seq_len=100 --use_queue=0
+cd sptm && mkdir -p model/pretrain && python run_pretraining.py --train_file="../data_demo/pre_train_data" --vocab_file="../data_demo/vocab" --model_save_dir="./model/pretrain" --batch_size=256 --print_step=100 --weight_decay=0 --embedding_dim=1000 --lstm_dim=500 --layer_num=1 --train_step=100000 --warmup_step=1000 --learning_rate=5e-5 --dropout_rate=0.1 --max_predictions_per_seq=10 --clip_norm=1.0 --max_seq_len=100 --use_queue=0 --representation_type=lstm
 ```
 参数说明：
 
@@ -93,12 +94,38 @@ clip_norm：梯度裁剪阈值
 
 use_queue：是否使用队列生成预训练数据
 
+representation_type：使用何种结构训练模型，可选择lstm或transformer
+
+##### 基于参数共享Transformer block的预训练
+```bash
+cd sptm && mkdir -p model/pretrain && python run_pretraining.py --train_file="../data_demo/pre_train_data" --vocab_file="../data_demo/vocab" --model_save_dir="./model/pretrain" --batch_size=64 --print_step=100 --embedding_dim=1000 --train_step=100000 --warmup_step=5000 --learning_rate=1e-5 --max_predictions_per_seq=10 --clip_norm=1.0 --max_len=100 --use_queue=0 --representation_type=transformer --initializer_range=0.02 --max_position_embeddings=140 --hidden_size=768 --num_hidden_layers=12 --num_attention_heads=12 --intermediate_size=1024
+```
+参数说明：
+
+learning_rate：学习率
+
+initializer_range：模型参数正态分布初始化的标准差
+
+max_position_embeddings： position的最大位置
+
+hidden_size：隐层大小
+
+num_hidden_layers：隐层数
+
+num_attention_heads：多头数
+
+intermediate_size：ffn层大小
+
+representation_type：使用何种结构训练模型，可选择lstm或transformer
+
+
 #### 2.微调意图匹配模型
 
 注意此处的```init_checkpoint```需要根据预训练的结果进行选取，如没有预训练模型，也可以不填写：
 
+##### 基于Bi-LSTM block的微调
 ```bash
-cd sptm && python run_classifier.py --output_id2label_file="model/id2label.has_init" --vocab_file="../data_demo/vocab" --train_file="../data_demo/train_data" --dev_file="../data_demo/valid_data" --model_save_dir="model/finetune" --lstm_dim=500 --embedding_dim=1000 --opt_type=adam --batch_size=256 --epoch=20 --learning_rate=1e-4 --seed=1 --max_len=100 --print_step=10 --dropout_rate=0.1 --layer_num=1 --init_checkpoint="model/pretrain/lm_pretrain.ckpt-1400"
+cd sptm && python run_classifier.py --output_id2label_file="model/id2label.has_init" --vocab_file="../data_demo/vocab" --train_file="../data_demo/train_data" --dev_file="../data_demo/valid_data" --model_save_dir="model/finetune" --lstm_dim=500 --embedding_dim=1000 --opt_type=adam --batch_size=256 --epoch=20 --learning_rate=1e-4 --seed=1 --max_len=100 --print_step=10 --dropout_rate=0.1 --layer_num=1 --init_checkpoint="model/pretrain/lm_pretrain.ckpt-1400" --representation_type=lstm
 ```
 参数说明：
 
@@ -109,6 +136,17 @@ opt_type：优化器类型，有sgd/adagrad/adam几种可选
 seed：随机种子的值，使用相同的随机种子保证微调模型结果一致
 
 init_checkpoint：预训练模型保存的checkpoint
+
+##### 基于参数共享Transformer block的微调
+```bash
+cd sptm && python run_classifier.py --output_id2label_file="model/id2label.has_init" --vocab_file="../data_demo/vocab" --train_file="../data_demo/train_data" --dev_file="../data_demo/valid_data" --model_save_dir="model/finetune" --embedding_dim=1000 --opt_type=adam --batch_size=64 --epoch=10 --learning_rate=1e-4 --seed=1 --max_len=100 --print_step=100 --dropout_rate=0.1 --use_queue=0 --representation_type=transformer --initializer_range=0.02 --max_position_embeddings=140 --hidden_size=768 --num_hidden_layers=12 --num_attention_heads=12 --intermediate_size=1024 --init_checkpoint="model/pretrain/lm_pretrain.ckpt-100800" --representation_type=transformer
+```
+参数说明：
+
+opt_type：优化器类型
+
+representation_type：使用何种结构训练模型，可选择lstm或transformer
+
 
 #### 3.用意图匹配模型对测试集进行预测
 
@@ -235,7 +273,8 @@ argv[4]: 领域意图映射文件
 | 数据集           | 模型                                                         | **唯一回答准确率** | **唯一回答召回率** | **唯一回答**F1 | **CPU**机器上推理耗时 |
 | ---------------- | ------------------------------------------------------------ | ------------------ | ------------------ | -------------- | --------------------- |
 | 一级知识库数据集 | DSSM[[下载](http://wos.58cdn.com.cn/nOlKjIhGntU/qamatch/model_min.zip)] | 0.8398             | 0.8326             | 0.8362         | **3ms**               |
-| 一级知识库数据集 | SPTM[[下载](http://wos.58cdn.com.cn/nOlKjIhGntU/qamatch/model_pretrain.zip)] | 0.8841             | 0.9002             | 0.8921         | 16ms                  |
-| 二级知识库数据集 | LSTM+DSSM融合模型[[下载](http://wos.58cdn.com.cn/nOlKjIhGntU/qamatch/model_merge.zip)] | 0.8957             | 0.9027             | **0.8992**     | 18ms                  |
+| 一级知识库数据集 | SPTM(LSTM)[[下载](http://wos.58cdn.com.cn/nOlKjIhGntU/qamatch/model_pretrain.zip)] | 0.8841             | 0.9002             | 0.8921         | 16ms                  |
+| 一级知识库数据集 | SPTM(Transformer)[[下载](http://wos.58cdn.com.cn/nOlKjIhGntU/qamatch/model_pretrain_transformer.zip)] | 0.9275             | 0.9298             | **0.9287**         | 17ms                  |
+| 二级知识库数据集 | LSTM+DSSM融合模型[[下载](http://wos.58cdn.com.cn/nOlKjIhGntU/qamatch/model_merge.zip)] | 0.8957             | 0.9027             | 0.8992     | 18ms                  |
 
 说明：由于示例数据中列表回答真实占比较小，这里我们主要看唯一回答的准确率、召回率和F1值。对于二级知识库数据集，我们也可以使用预训练模型来完成自动问答，这里不做过多描述。
