@@ -66,7 +66,7 @@ qa_match支持知识库结构如下：
 | ---------------- | -------------------------------- | ----------------------------------------------- | ----------------------------------------------- |
 |模型结构          | LSTM                             | 共享参数的Transformer                          | 共享参数的Transformer          |
 | 预训练数据集大小 | 10Million                        | 10Million                                      | 10Million                             |
-| 预训练资源       | 10台Nvidia K40   / 22G Memory       | 10台Nvidia K40   / 22G Memory                     | 10台Nvidia K40   / 22G Memory |
+| 预训练资源       | 10台Nvidia K40   / 12G Memory       | 10台Nvidia K40   / 12G Memory                     | 10台Nvidia K40   / 12G Memory |
 | 预训练参数       | step = 100000 / batch size = 128 | step = 100000 / batch size = 128 / 1 layers / 12 heads | step = 100000 / batch size = 128 / 12 layers / 12 heads |
 | 预训练耗时       | 8.9 hours              | 13.5 hours                                             | 32.9 hours                                              |
 | 预训练模型大小   | 81M                            | 80.6M                                        | 121M                                    |
