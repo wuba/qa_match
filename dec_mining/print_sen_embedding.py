@@ -36,6 +36,7 @@ def gen_test_data(input_file, word2id, max_seq_len):
         ls = line.strip().split("/")
         center_size.append(len(ls))
         for l in ls:
+            l = l.replace(" ", "")
             l = l.replace("", " ")
             fs = l.rstrip().split()
             if len(fs) > max_seq_len:

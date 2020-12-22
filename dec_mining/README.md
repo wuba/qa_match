@@ -11,11 +11,11 @@
 
 * 替换表征：原始DEC算法论文中使用DNN 结构的auto-encoder 作为通用特征表征，而在我们实验的时候，在垂直场景我们有表征能力更强的预训练模型，于是我们把原始DEC算法中的表征层替换为垂直场景的SPTM预训练模型，相比通用的auto-encoder 在文本场景，表征能力更强；后续聚类过程在这个表征基础上进行微调。
 
-![img](./images/modify_1.gif)
+            ![img](./images/modify_1.gif)
 
 * 自定义中心：在原始的DEC算法中，唯一的有监督信号是由K-means做聚类中心初始化时给到的，后续的训练过程实际上是对这个分布的高置信部分做强化，可以说，聚类中心初始化的效果决定着整个DEC算法的效果，但是K-means的聚类结果有很强的随机性，所以我们使用自定义聚类中心替代了原始DEC算法中K-means聚类出的聚类中心，使用已有的标准问的所有扩展问法向量的平均作为该标准问的向量，也就是自定义的聚类中心，这样DEC后续学习到的数据分布是按照目前已拟定的标准问题作为聚类中心得到的。
 
-![img](./images/modify_2.gif)
+            ![img](./images/modify_2.gif)
 
 
 
@@ -26,7 +26,7 @@
 
  
 
-冷启动阶段挖掘初始知识冷启动挖掘具体指在新场景接入自动问答时，存在一定量的历史无监督数据，但是没有形成知识，通过挖掘总结出标准问和扩展问。
+冷启动阶段挖掘初始知识具体指在新场景接入自动问答时，存在一定量的历史无监督数据，但是没有形成知识，通过挖掘总结出标准问和扩展问。
 
  
 
@@ -72,7 +72,11 @@
 
 1. 基于目前自动问答流程（参考[qa match 基于一层知识库结构的自动问答](https://github.com/wuba/qa_match/tree/master#%E5%9F%BA%E4%BA%8E%E4%B8%80%E5%B1%82%E7%BB%93%E6%9E%84%E7%9F%A5%E8%AF%86%E5%BA%93%E7%9A%84%E8%87%AA%E5%8A%A8%E9%97%AE%E7%AD%94)），从线上拒识问题以及每周人工抽样标注的`新分类问题`（目前标准问题没有覆盖到并且非拒识的问题）中提取新知识。
 
-2. 粗略筛除几类问题：1）超短query（长度小于3的线上问题，这个类别是optional的，根据具体场景实现），此类query 在问答场景通常会被拒识，若不拒识，大部分通过匹配实现 2）高频问题（对于高频问题，一定要覆盖，不需要再经过挖掘，直接筛选出来交给人工审核进行入库，剩余问题送入DEC算法模块进行挖掘。
+2. 粗略筛除几类问题：
+
+   a）超短query（长度小于3的线上问题，这个类别是optional的，根据具体场景实现）。此类query 在问答场景通常会被拒识，若不拒识，大部分通过匹配实现。
+
+   b）高频问题。对于高频问题，一定要覆盖，不需要再经过挖掘，直接筛选出来交给人工审核进行入库，剩余问题送入DEC算法模块进行挖掘。
 
 3. 初步筛出比较纯粹的query 之后，使用已有标准问题作为自定义聚类中心，选取聚类结果概率值 > 阈值的样本点作为扩展问题，进行人工审核入库；对于挖掘新类别的标准问题，可以参考冷启动场景的方法进行挖掘。
 
@@ -92,8 +96,8 @@
 
  
 
-* [trainset](./dec_mining/data/trainset)：待聚类数据。两列\t分隔，第一列为 ground truth 标签问题ID ，格式 `__label__n`；如果没有ground truth 标签，也需要设置一个n进行占位，查看聚类结果时忽略掉即可；第二列为标准问题文本，分字格式（空格切分）。
-* [topk.std.text.avg](./dec_mining/data) ： 自定义聚类中心文件。该文件为从topk问题总结出的标准问，每行为一个聚类中心，支持多个问题的平均作为聚类中心的格式 使用斜杠/分隔 ：“你好这辆车还在么/车还在吗/这车还在吗”
+* [trainset](./data/trainset)：待聚类数据。两列\t分隔，第一列为 ground truth 标签问题ID ，格式 `__label__n`；如果没有ground truth 标签，也需要设置一个n进行占位，查看聚类结果时忽略掉即可；第二列为标准问题文本，分字格式（空格切分）。
+* [topk.std.text.avg](./data/topk.std.text.avg) ： 自定义聚类中心文件。该文件为从topk问题总结出的标准问，每行为一个聚类中心，支持多个问题的平均作为聚类中心的格式 使用斜杠/分隔，如：“你好这辆车还在么/车还在吗/这车还在吗”
 
 
 
@@ -146,17 +150,17 @@ cd dec_mining && python3 ./train.py --init_checkpoint=./pretrain_model/lm_pretra
 
   epochs: epoch 数量
 
-  n_clusters: K-means 方法指定聚类中心数；此参数与external_cluster_center 只使用一个
+  n_clusters: K-means 方法指定聚类中心数；此参数与external_cluster_center 只传入一个即可，需要与步骤（3）中inference 过程使用的参数一致，指定`n_clusters`表示使用kmeans做初始化，指定external_cluster_center表示使用自定义聚类中心做初始化
 
   lstm_dim: SPTM lstm的门控单元数
 
   embedding_dim: SPTM 词嵌入维度，需要设置为lstm_dim 参数的2倍
 
-  vocab_file: 词典文件（需要包含<PAD><UNK><MASK>)
+  vocab_file: 词典文件（需要包含  <PAD>   <UNK>   <MASK>  )
 
-  external_cluster_center: 自定义聚类中心文件，此参数与n_clusters 只传入一个
+  external_cluster_center: 自定义聚类中心文件，此参数与n_clusters 只传入一个即可，需要与步骤（3）中inference 过程使用的参数一致，指定`n_clusters`表示使用kmeans做初始化，指定external_cluster_center表示使用自定义聚类中心做初始化
 
-  modelsave_dir: DEC模型保存路径
+  model_save_dir: DEC模型保存路径
 
   learning_rate: 学习率
 
@@ -169,7 +173,7 @@ cd dec_mining && python3 ./train.py --init_checkpoint=./pretrain_model/lm_pretra
  
 
 ```bash
-cd dec_mining  && python3 inference.py --model_path=./saved_model/finetune.ckpt-0 --train_file=./data/trainset --n_clusters=9 --lstm_dim=128 --embedding_dim=256 --vocab_file=./vocab --pred_score_path=./pred_score
+cd dec_mining  && python3 inference.py --model_path=./saved_model/finetune.ckpt-0 --train_file=./data/trainset --external_cluster_center=./topk.std.embedding.avg --lstm_dim=128 --embedding_dim=256 --vocab_file=./vocab --pred_score_path=./pred_score
 ```
 
  
@@ -182,15 +186,13 @@ cd dec_mining  && python3 inference.py --model_path=./saved_model/finetune.ckpt-
 
   train_file: 待聚类数据
 
-  n_clusters: K-means 方法指定聚类中心数
-
   lstm_dim: SPTM lstm的门控单元数
 
   embedding_dim: SPTM 词嵌入维度
 
-  vocab_file: 词典文件（需要包含<PAD><UNK><MASK>)
+  vocab_file: 词典文件（需要包含   <PAD>   <UNK>   <MASK>  )
 
-  pred_score_path： 聚类结果打分文件，格式`pred_label + \t + question + \t + groundtruth_label + \t + probability` 例如`__label__4`    请添加车主阿涛微信详谈     `__label__0    ` 00.9888488
+  pred_score_path： 聚类结果打分文件，格式：`pred_label + \t + question + \t + groundtruth_label + \t + probability` 例如：`__label__4`    请添加车主阿涛微信详谈     `__label__0    ` 00.9888488
 
  
 
@@ -230,7 +232,7 @@ cd dec_mining  && python3 inference.py --model_path=./saved_model/finetune.ckpt-
 
  
 
-| 数据集 | 模型 | **silhouette** | **Runtime** |  **Inference Time** | **Accuracy** |
+| 数据集 | 模型 | **Silhouette** | **Runtime** |  **Inference Time** | **Accuracy** |
 | ------ | ---- | -------------- | ----------- |------------ | ------------ |
 | 1w     | DEC  | 0.7962         | 30min       | 52s       |0.8437       |
 | 10W    | DEC  | 0.9302         | 3h 5min     | 5min 55s           |--           |
