@@ -74,7 +74,7 @@ cd sptm && mkdir -p model/pretrain && python run_pretraining.py --train_file="..
 ```
 参数说明：
 
-vocab：词典文件（需要包含<PAD><UNK><MASK>)
+vocab：词典文件（需要包含 `<PAD><UNK><MASK>`)
 
 train_file/valid_data：训练/验证集
 
@@ -275,7 +275,7 @@ argv[4]: 领域意图映射文件
 | 一级知识库数据集 | DSSM[[下载](http://wos.58cdn.com.cn/nOlKjIhGntU/qamatch/model_min.zip)] | 0.8398             | 0.8326             | 0.8362         | **3ms**               |
 | 一级知识库数据集 | SPTM(LSTM)[[下载](http://wos.58cdn.com.cn/nOlKjIhGntU/qamatch/model_pretrain.zip)] | 0.8841             | 0.9002             | 0.8921         | 16ms                  |
 | 一级知识库数据集 | SPTM(Transformer 12 Layers,12 Heads)[[下载](http://wos.58cdn.com.cn/nOlKjIhGntU/qamatch/model_pretrain_transformer.zip)] | 0.9275             | 0.9298             | **0.9287**         | 17ms                  |
-| 一级知识库数据集 | SPTM(Transformer 1 Layers,12 Heads)[[下载](http://wos.58cdn.com.cn/nOlKjIhGntU/qamatch/transorformer_1_layer_12_heads.zip)] | 0.9122          | 0.9105             | 0.9122 |       13ms    |                  
+| 一级知识库数据集 | SPTM(Transformer 1 Layers,12 Heads)[[下载](http://wos.58cdn.com.cn/nOlKjIhGntU/qamatch/transorformer_1_layer_12_heads.zip)] | 0.9122          | 0.9105             | 0.9122 |       13ms    |
 | 二级知识库数据集 | LSTM+DSSM融合模型[[下载](http://wos.58cdn.com.cn/nOlKjIhGntU/qamatch/model_merge.zip)] | 0.8957             | 0.9027             | 0.8992     | 18ms                  |
 
 说明：由于示例数据中列表回答真实占比较小，这里我们主要看唯一回答的准确率、召回率和F1值。对于二级知识库数据集，我们也可以使用预训练模型来完成自动问答，这里不做过多描述。
