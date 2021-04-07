@@ -122,3 +122,4 @@ v1.3:https://github.com/wuba/qa_match/tree/v1.3
 我们诚挚地希望开发者向我们提出宝贵的意见和建议。您可以挑选以下方式向我们反馈建议和问题：
 1. 在 github上 提交 PR 或者 Issue
 2. 邮件发送至 ailab-opensource@58.com
+3. 欢迎加入qa_match QQ群([674442079](https://jq.qq.com/?_wv=1027&k=J9EC2OQS))交流讨论
